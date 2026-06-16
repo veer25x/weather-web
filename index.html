@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>भारत मौसम | India Weather – All Districts</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --sky-deep: #b8e1fc;
+      --sky-mid: #d4f0ff;
+      --sky-light: #ecf9ff;
+      --cloud-white: #f0fcff;
+      --blue-soft: #87ceeb;
+      --blue-clean: #4aa3df;
+      --dark-text: #1e3a5f;
+      --accent-orange: #f39c12;
+      --glass-bg: rgba(255, 255, 255, 0.55);
+      --glass-border: rgba(56, 145, 210, 0.4);
+      --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(145deg, #aad0f5 0%, #c5e4fc 40%, #e1f3fe 100%);
+      min-height: 100vh;
+      color: var(--dark-text);
+      padding: 1rem;
+      position: relative;
+    }
+
+    /* Animated clouds background */
+    .cloud-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .cloud {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 80% 20% 70% 30% / 60% 50% 50% 40%;
+      filter: blur(28px);
+      animation: floatCloud 25s infinite linear;
+      box-shadow: 0 10px 35px rgba(255, 245, 200, 0.4);
+    }
+    @keyframes floatCloud {
+      0% { transform: translateX(-20%) translateY(0%); }
+      100% { transform: translateX(120%) translateY(-15%); }
+    }
+
+    /* main container */
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* header */
+    .brand {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      background: rgba(255, 255, 245, 0.5);
+      backdrop-filter: blur(12px);
+      border-radius: 3rem;
+      padding: 1rem 1rem 0.8rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .brand h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #0c4e7a;
+      text-shadow: 2px 2px 8px rgba(255,255,210,0.8);
+      letter-spacing: -0.5px;
+    }
+    .brand h1 span {
+      background: linear-gradient(135deg, #e67e22, #f39c12);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .sub {
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    /* search + district selector */
+    .search-panel {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-bottom: 1.8rem;
+    }
+    .district-select {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      padding: 0.7rem 1.2rem;
+      border-radius: 60px;
+      font-size: 0.9rem;
+      color: #0c4e7a;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      width: 260px;
+      transition: 0.2s;
+    }
+    .district-select:hover {
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .search-panel input {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      padding: 0.7rem 1.5rem;
+      width: 260px;
+      border-radius: 60px;
+      font-size: 0.9rem;
+      color: #0c4e7a;
+      font-weight: 500;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-panel input::placeholder {
+      color: #5f8db0;
+    }
+    .btn {
+      border: none;
+      padding: 0 1.8rem;
+      border-radius: 60px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f39c12;
+      color: #1e3a5f;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .btn-loc {
+      background: #2c7da0;
+      color: white;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+    }
+
+    /* status */
+    .status-chip {
+      display: none;
+      background: rgba(44, 125, 160, 0.2);
+      backdrop-filter: blur(12px);
+      width: fit-content;
+      margin: 0 auto 1.2rem;
+      padding: 0.45rem 1.3rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #0a3a5a;
+    }
+    .error-chip {
+      display: none;
+      background: rgba(220, 53, 69, 0.15);
+      border-left: 4px solid #e07c7c;
+      border-radius: 1rem;
+      padding: 0.7rem 1rem;
+      max-width: 500px;
+      margin: 0 auto 1.2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      backdrop-filter: blur(8px);
+    }
+
+    /* glass cards */
+    .glass-card {
+      background: rgba(255, 255, 250, 0.68);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(100, 170, 220, 0.4);
+      border-radius: 2rem;
+      padding: 1.6rem;
+      margin-bottom: 1.6rem;
+      transition: 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .glass-card:hover {
+      background: rgba(255, 255, 252, 0.8);
+      border-color: #6ab0e6;
+    }
+
+    /* current */
+    .loc-time {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+    .city-name {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #0a4c78;
+    }
+    .date-txt {
+      font-size: 0.8rem;
+      opacity: 0.75;
+    }
+    .temp-block {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin: 0.8rem 0;
+    }
+    .temp-value {
+      font-size: 4.8rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #e67e22;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .unit {
+      font-size: 2rem;
+      font-weight: 600;
+    }
+    .feels {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    .weather-icon {
+      text-align: center;
+    }
+    .weather-emoji {
+      font-size: 4rem;
+      filter: drop-shadow(2px 4px 10px rgba(0,0,0,0.1));
+    }
+    .condition {
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.9rem;
+      margin-top: 1.3rem;
+      background: rgba(255,255,245,0.5);
+      padding: 1rem;
+      border-radius: 1.5rem;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      opacity: 0.7;
+    }
+    .stat-value {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    /* hourly */
+    .section-title {
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hour-scroll {
+      display: flex;
+      gap: 0.8rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    .hour-item {
+      background: rgba(255,255,245,0.7);
+      border-radius: 1.4rem;
+      padding: 0.7rem 0.9rem;
+      min-width: 85px;
+      text-align: center;
+      border: 1px solid rgba(74, 163, 223, 0.3);
+      transition: 0.1s;
+    }
+    .hour-item:hover {
+      background: white;
+      transform: translateY(-3px);
+    }
+    .hour-time {
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+    .hour-emoji {
+      font-size: 1.8rem;
+      margin: 5px 0;
+    }
+    .hour-temp {
+      font-weight: 800;
+    }
+    .hour-rain {
+      font-size: 0.65rem;
+      color: #2c7da0;
+    }
+
+    /* 5-day */
+    .daily-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+    }
+    .day-card {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 1.5rem;
+      padding: 0.8rem 0.6rem;
+      flex: 1 1 100px;
+      text-align: center;
+      transition: 0.2s;
+      border: 1px solid rgba(74, 163, 223, 0.3);
+    }
+    .day-card:hover {
+      background: rgba(255, 255, 245, 0.95);
+      transform: translateY(-6px);
+    }
+    .day-name {
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    .day-emoji {
+      font-size: 2rem;
+      margin: 6px 0;
+    }
+    .day-high {
+      font-weight: 800;
+      font-size: 1rem;
+    }
+    .day-low {
+      font-size: 0.75rem;
+      opacity: 0.75;
+    }
+    .day-rain {
+      font-size: 0.7rem;
+      color: #2c7da0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.7rem;
+      margin-top: 2rem;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 640px) {
+      .temp-value { font-size: 3rem; }
+      .city-name { font-size: 1.3rem; }
+      .district-select, .search-panel input { width: 100%; }
+      .search-panel { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cloud-bg">
+  <div class="cloud" style="width: 280px; height: 140px; top: 8%; left: -5%; animation-duration: 32s;"></div>
+  <div class="cloud" style="width: 380px; height: 180px; bottom: 12%; left: 65%; animation-duration: 45s; animation-delay: -6s;"></div>
+  <div class="cloud" style="width: 220px; height: 110px; top: 45%; right: -2%; animation-duration: 38s; animation-delay: -12s;"></div>
+  <div class="cloud" style="width: 310px; height: 150px; bottom: 30%; left: 15%; animation-duration: 52s;"></div>
+</div>
+
+<div class="container">
+  <div class="brand">
+    <h1>🇮🇳 <span>भारत मौसम</span> | India Weather</h1>
+    <div class="sub">🌦️ Complete coverage · 700+ districts · real-time forecast</div>
+  </div>
+
+  <div class="search-panel">
+    <select id="districtSelect" class="district-select">
+      <option value="">📌 Select District (All India)</option>
+    </select>
+    <input type="text" id="cityInput" placeholder="Or search city / district..." value="Lucknow">
+    <button id="searchBtn" class="btn">🔍 Get Forecast</button>
+    <button id="geoBtn" class="btn btn-loc">📍 My Location</button>
+  </div>
+
+  <div id="statusChip" class="status-chip"></div>
+  <div id="errorChip" class="error-chip"></div>
+
+  <!-- Current Weather Card -->
+  <div id="currentCard" class="glass-card hidden">
+    <div class="loc-time">
+      <span class="city-name" id="cityName">——</span>
+      <span class="date-txt" id="dateTimeNow">——</span>
+    </div>
+    <div class="temp-block">
+      <div>
+        <span class="temp-value" id="mainTemp">--</span><span class="unit">°C</span>
+        <div class="feels" id="feelsLike">Feels like --°C</div>
+      </div>
+      <div class="weather-icon">
+        <div class="weather-emoji" id="weatherEmoji">☀️</div>
+        <div class="condition" id="conditionText">—</div>
+      </div>
+    </div>
+    <div class="stats" id="statsGrid"></div>
+  </div>
+
+  <!-- Hourly -->
+  <div id="hourlyCard" class="glass-card hidden">
+    <div class="section-title">⏱️ Hourly Forecast (Next 6 Hours)</div>
+    <div class="hour-scroll" id="hourlyList"></div>
+  </div>
+
+  <!-- 5-day daily -->
+  <div id="dailyCard" class="glass-card hidden">
+    <div class="section-title">📅 5-Day Outlook</div>
+    <div class="daily-grid" id="dailyGrid"></div>
+  </div>
+
+  <footer>🌤️ Real-time data via Open-Meteo · Covers all Indian districts & towns · Free & accurate</footer>
+</div>
+
+<script>
+  // --------------------------------------------------------------
+  // COMPLETE LIST OF MAJOR INDIAN DISTRICTS / CITIES (700+ coverage)
+  // curated list of district headquarters & major cities across all states
+  // --------------------------------------------------------------
+  const indianDistricts = [
+    "Anantapur", "Chittoor", "East Godavari", "Guntur", "Kadapa", "Krishna", "Kurnool", "Nellore", "Prakasam", "Srikakulam", "Visakhapatnam", "Vizianagaram", "West Godavari",
+    "Itanagar", "Tawang", "Ziro", "Pasighat",
+    "Barpeta", "Bongaigaon", "Cachar", "Darrang", "Dhemaji", "Dhubri", "Dibrugarh", "Goalpara", "Golaghat", "Hailakandi", "Jorhat", "Kamrup", "Karbi Anglong", "Karimganj", "Kokrajhar", "Lakhimpur", "Morigaon", "Nagaon", "Nalbari", "Sivasagar", "Sonitpur", "Tinsukia", "Udalguri",
+    "Araria", "Arwal", "Aurangabad", "Banka", "Begusarai", "Bhagalpur", "Bhojpur", "Buxar", "Darbhanga", "East Champaran", "Gaya", "Gopalganj", "Jamui", "Jehanabad", "Kaimur", "Katihar", "Khagaria", "Kishanganj", "Lakhisarai", "Madhepura", "Madhubani", "Munger", "Muzaffarpur", "Nalanda", "Nawada", "Patna", "Purnia", "Rohtas", "Saharsa", "Samastipur", "Saran", "Sheikhpura", "Sheohar", "Sitamarhi", "Siwan", "Supaul", "Vaishali", "West Champaran",
+    "Chandigarh",
+    "Bastar", "Bilaspur", "Dantewada", "Dhamtari", "Durg", "Jagdalpur", "Janjgir-Champa", "Jashpur", "Kabirdham", "Kanker", "Kondagaon", "Korba", "Koriya", "Mahasamund", "Mungeli", "Narayanpur", "Raigarh", "Raipur", "Rajnandgaon", "Sukma", "Surajpur", "Surguja",
+    "Dadra and Nagar Haveli", "Daman", "Diu",
+    "Central Delhi", "East Delhi", "New Delhi", "North Delhi", "North East Delhi", "North West Delhi", "Shahdara", "South Delhi", "South East Delhi", "South West Delhi", "West Delhi",
+    "North Goa", "South Goa",
+    "Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar", "Botad", "Chhota Udaipur", "Dahod", "Dangs", "Devbhoomi Dwarka", "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kheda", "Kutch", "Mahisagar", "Mehsana", "Morbi", "Narmada", "Navsari", "Panchmahal", "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat", "Surendranagar", "Tapi", "Vadodara", "Valsad",
+    "Ambala", "Bhiwani", "Charkhi Dadri", "Faridabad", "Fatehabad", "Gurugram", "Hisar", "Jhajjar", "Jind", "Kaithal", "Karnal", "Kurukshetra", "Mahendragarh", "Nuh", "Palwal", "Panchkula", "Panipat", "Rewari", "Rohtak", "Sirsa", "Sonipat", "Yamunanagar",
+    "Bilaspur", "Chamba", "Hamirpur", "Kangra", "Kinnaur", "Kullu", "Lahaul and Spiti", "Mandi", "Shimla", "Sirmaur", "Solan", "Una",
+    "Anantnag", "Bandipora", "Baramulla", "Budgam", "Doda", "Ganderbal", "Jammu", "Kathua", "Kishtwar", "Kulgam", "Kupwara", "Poonch", "Pulwama", "Rajouri", "Ramban", "Reasi", "Samba", "Shopian", "Srinagar", "Udhampur",
+    "Bokaro", "Chatra", "Deoghar", "Dhanbad", "Dumka", "East Singhbhum", "Garhwa", "Giridih", "Godda", "Gumla", "Hazaribagh", "Jamtara", "Khunti", "Koderma", "Latehar", "Lohardaga", "Pakur", "Palamu", "Ramgarh", "Ranchi", "Sahebganj", "Seraikela Kharsawan", "Simdega", "West Singhbhum",
+    "Bagalkot", "Ballari", "Belagavi", "Bengaluru Rural", "Bengaluru Urban", "Bidar", "Chamarajanagar", "Chikballapur", "Chikkamagaluru", "Chitradurga", "Dakshina Kannada", "Davanagere", "Dharwad", "Gadag", "Hassan", "Haveri", "Kalaburagi", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysuru", "Raichur", "Ramanagara", "Shivamogga", "Tumakuru", "Udupi", "Uttara Kannada", "Vijayapura", "Yadgir",
+    "Alappuzha", "Ernakulam", "Idukki", "Kannur", "Kasaragod", "Kollam", "Kottayam", "Kozhikode", "Malappuram", "Palakkad", "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad",
+    "Kargil", "Leh",
+    "Lakshadweep",
+    "Agar Malwa", "Alirajpur", "Anuppur", "Ashoknagar", "Balaghat", "Barwani", "Betul", "Bhind", "Bhopal", "Burhanpur", "Chhatarpur", "Chhindwara", "Damoh", "Datia", "Dewas", "Dhar", "Dindori", "Guna", "Gwalior", "Harda", "Hoshangabad", "Indore", "Jabalpur", "Jhabua", "Katni", "Khandwa", "Khargone", "Mandla", "Mandsaur", "Morena", "Narsinghpur", "Neemuch", "Niwari", "Panna", "Raisen", "Rajgarh", "Ratlam", "Rewa", "Sagar", "Satna", "Sehore", "Seoni", "Shahdol", "Shajapur", "Sheopur", "Shivpuri", "Sidhi", "Singrauli", "Tikamgarh", "Ujjain", "Umaria", "Vidisha",
+    "Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nandurbar", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal",
+    "Bishnupur", "Chandel", "Churachandpur", "Imphal East", "Imphal West", "Jiribam", "Kakching", "Kamjong", "Kangpokpi", "Noney", "Pherzawl", "Senapati", "Tamenglong", "Tengnoupal", "Thoubal", "Ukhrul",
+    "East Garo Hills", "East Jaintia Hills", "East Khasi Hills", "North Garo Hills", "Ri Bhoi", "South Garo Hills", "South West Garo Hills", "South West Khasi Hills", "West Garo Hills", "West Jaintia Hills", "West Khasi Hills",
+    "Aizawl", "Champhai", "Hnahthial", "Khawzawl", "Kolasib", "Lawngtlai", "Lunglei", "Mamit", "Saiha", "Serchhip", "Saitual",
+    "Dimapur", "Kiphire", "Kohima", "Longleng", "Mokokchung", "Mon", "Niuland", "Noklak", "Peren", "Phek", "Shamator", "Tseminyu", "Tuensang", "Wokha", "Zunheboto",
+    "Angul", "Balangir", "Balasore", "Bargarh", "Bhadrak", "Boudh", "Cuttack", "Deogarh", "Dhenkanal", "Gajapati", "Ganjam", "Jagatsinghpur", "Jajpur", "Jharsuguda", "Kalahandi", "Kandhamal", "Kendrapara", "Kendujhar", "Khordha", "Koraput", "Malkangiri", "Mayurbhanj", "Nabarangpur", "Nayagarh", "Nuapada", "Puri", "Rayagada", "Sambalpur", "Sonepur", "Sundargarh",
+    "Karaikal", "Mahe", "Puducherry", "Yanam",
+    "Amritsar", "Barnala", "Bathinda", "Faridkot", "Fatehgarh Sahib", "Fazilka", "Ferozepur", "Gurdaspur", "Hoshiarpur", "Jalandhar", "Kapurthala", "Ludhiana", "Mansa", "Moga", "Mohali", "Muktsar", "Pathankot", "Patiala", "Rupnagar", "Sangrur", "Shaheed Bhagat Singh Nagar", "Tarn Taran",
+    "Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner", "Bundi", "Chittorgarh", "Churu", "Dausa", "Dholpur", "Dungarpur", "Hanumangarh", "Jaipur", "Jaisalmer", "Jalore", "Jhalawar", "Jhunjhunu", "Jodhpur", "Karauli", "Kota", "Nagaur", "Pali", "Pratapgarh", "Rajsamand", "Sawai Madhopur", "Sikar", "Sirohi", "Sri Ganganagar", "Tonk", "Udaipur",
+    "East Sikkim", "North Sikkim", "South Sikkim", "West Sikkim",
+    "Ariyalur", "Chengalpattu", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kallakurichi", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Ranipet", "Salem", "Sivaganga", "Tenkasi", "Thanjavur", "Theni", "Thoothukudi", "Tiruchirappalli", "Tirunelveli", "Tirupathur", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar",
+    "Hyderabad", "Adilabad", "Bhadradri Kothagudem", "Hanamkonda", "Jagtial", "Jangaon", "Jayashankar Bhupalpally", "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Kumuram Bheem", "Mahabubabad", "Mahabubnagar", "Mancherial", "Medak", "Medchal", "Mulugu", "Nagarkurnool", "Nalgonda", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla", "Rangareddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy", "Warangal",
+    "Dhalai", "Gomati", "Khowai", "North Tripura", "Sepahijala", "South Tripura", "Unakoti", "West Tripura",
+    "Agra", "Aligarh", "Ambedkar Nagar", "Amethi", "Amroha", "Auraiya", "Ayodhya", "Azamgarh", "Baghpat", "Bahraich", "Ballia", "Balrampur", "Banda", "Barabanki", "Bareilly", "Basti", "Bhadohi", "Bijnor", "Budaun", "Bulandshahr", "Chandauli", "Chitrakoot", "Deoria", "Etah", "Etawah", "Farrukhabad", "Fatehpur", "Firozabad", "Gautam Buddha Nagar", "Ghaziabad", "Ghazipur", "Gonda", "Gorakhpur", "Hamirpur", "Hapur", "Hardoi", "Hathras", "Jalaun", "Jaunpur", "Jhansi", "Kannauj", "Kanpur Dehat", "Kanpur Nagar", "Kasganj", "Kaushambi", "Kushinagar", "Lakhimpur Kheri", "Lalitpur", "Lucknow", "Maharajganj", "Mahoba", "Mainpuri", "Mathura", "Mau", "Meerut", "Mirzapur", "Moradabad", "Muzaffarnagar", "Pilibhit", "Pratapgarh", "Prayagraj", "Raebareli", "Rampur", "Saharanpur", "Sambhal", "Sant Kabir Nagar", "Shahjahanpur", "Shamli", "Shravasti", "Siddharthnagar", "Sitapur", "Sonbhadra", "Sultanpur", "Unnao", "Varanasi",
+    "Almora", "Bageshwar", "Chamoli", "Champawat", "Dehradun", "Haridwar", "Nainital", "Pauri Garhwal", "Pithoragarh", "Rudraprayag", "Tehri Garhwal", "Udham Singh Nagar", "Uttarkashi",
+    "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur", "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram", "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia", "North 24 Parganas", "Paschim Bardhaman", "Paschim Medinipur", "Purba Bardhaman", "Purba Medinipur", "Purulia", "South 24 Parganas", "Uttar Dinajpur"
+  ];
+  
+  // remove duplicates (just in case) and sort
+  const uniqueDistricts = [...new Set(indianDistricts)].sort((a,b)=>a.localeCompare(b));
+  
+  // populate select dropdown
+  const districtSelect = document.getElementById('districtSelect');
+  uniqueDistricts.forEach(dist => {
+    const option = document.createElement('option');
+    option.value = dist;
+    option.textContent = dist;
+    districtSelect.appendChild(option);
+  });
+  
+  // UI elements
+  const statusDiv = document.getElementById('statusChip');
+  const errorDiv = document.getElementById('errorChip');
+  const currentCard = document.getElementById('currentCard');
+  const hourlyCard = document.getElementById('hourlyCard');
+  const dailyCard = document.getElementById('dailyCard');
+  
+  function showStatus(msg, isError = false) {
+    if (isError) {
+      errorDiv.textContent = msg;
+      errorDiv.style.display = 'block';
+      statusDiv.style.display = 'none';
+      setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+    } else {
+      statusDiv.textContent = msg;
+      statusDiv.style.display = 'inline-block';
+      errorDiv.style.display = 'none';
+      setTimeout(() => { statusDiv.style.display = 'none'; }, 2800);
+    }
+  }
+  
+  // map WMO codes to emoji & description
+  function getWeatherEmoji(code) {
+    const map = {
+      0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
+      51: '🌦️', 53: '🌧️', 55: '🌧️', 61: '🌧️', 63: '🌧️', 65: '🌧️',
+      71: '🌨️', 73: '❄️', 75: '❄️', 77: '🌨️', 80: '🌦️', 81: '🌧️',
+      82: '⛈️', 85: '🌨️', 86: '❄️', 95: '⛈️', 96: '⛈️', 99: '🌩️'
+    };
+    return map[code] || '🌡️';
+  }
+  
+  async function fetchWeatherByCoords(lat, lon, locationName) {
+    showStatus(`🌐 Getting real-time weather for ${locationName}...`);
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl,precipitation&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia/Kolkata&forecast_days=5`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Weather API failed');
+      const data = await resp.json();
+      renderCurrent(data, locationName);
+      renderHourly(data);
+      renderDaily(data);
+      currentCard.classList.remove('hidden');
+      hourlyCard.classList.remove('hidden');
+      dailyCard.classList.remove('hidden');
+      showStatus(`✅ ${locationName} : ${Math.round(data.current.temperature_2m)}°C`, false);
+    } catch(err) {
+      showStatus(`⚠️ ${err.message}`, true);
+      currentCard.classList.add('hidden');
+      hourlyCard.classList.add('hidden');
+      dailyCard.classList.add('hidden');
+    }
+  }
+  
+  async function getCoordsFromCity(city) {
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+    const res = await fetch(geoUrl);
+    if (!res.ok) throw new Error('Geocoding error');
+    const json = await res.json();
+    if (!json.results || json.results.length === 0) throw new Error(`Location "${city}" not found in India. Try district name.`);
+    const loc = json.results[0];
+    let display = loc.name;
+    if (loc.admin1) display += `, ${loc.admin1}`;
+    if (loc.country) display += `, ${loc.country}`;
+    return { lat: loc.latitude, lon: loc.longitude, name: display };
+  }
+  
+  async function loadWeatherByCity(city) {
+    if (!city.trim()) { showStatus('Enter district name', true); return; }
+    currentCard.classList.add('hidden');
+    hourlyCard.classList.add('hidden');
+    dailyCard.classList.add('hidden');
+    try {
+      const { lat, lon, name } = await getCoordsFromCity(city);
+      await fetchWeatherByCoords(lat, lon, name);
+    } catch(err) {
+      showStatus(err.message, true);
+    }
+  }
+  
+  function renderCurrent(data, locName) {
+    const curr = data.current;
+    const emoji = getWeatherEmoji(curr.weather_code);
+    document.getElementById('cityName').innerHTML = locName;
+    document.getElementById('dateTimeNow').innerHTML = new Date().toLocaleString('en-IN', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+    document.getElementById('mainTemp').innerHTML = Math.round(curr.temperature_2m);
+    document.getElementById('feelsLike').innerHTML = `Feels like ${Math.round(curr.apparent_temperature)}°C`;
+    document.getElementById('weatherEmoji').innerHTML = emoji;
+    document.getElementById('conditionText').innerHTML = ['Clear','Partly cloudy','Cloudy','Overcast','Fog','Drizzle','Rain','Snow','Thunderstorm'][Math.floor(curr.weather_code/20)] || 'Variable';
+    const stats = [
+      { label: '💧 Humidity', value: `${curr.relative_humidity_2m}%` },
+      { label: '🌬️ Wind', value: `${(curr.wind_speed_10m * 3.6).toFixed(1)} km/h` },
+      { label: '🔽 Pressure', value: `${curr.pressure_msl || '--'} hPa` },
+      { label: '🌧️ Rain', value: `${curr.precipitation || 0} mm` }
+    ];
+    document.getElementById('statsGrid').innerHTML = stats.map(s => `<div class="stat-item"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div></div>`).join('');
+  }
+  
+  function renderHourly(data) {
+    const hourly = data.hourly;
+    const now = new Date();
+    let start = hourly.time.findIndex(t => new Date(t) >= now);
+    if (start === -1) start = 0;
+    const items = hourly.time.slice(start, start+6);
+    const html = items.map((t, idx) => {
+      const i = start + idx;
+      const emoji = getWeatherEmoji(hourly.weather_code[i]);
+      return `<div class="hour-item"><div class="hour-time">${new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div><div class="hour-emoji">${emoji}</div><div class="hour-temp">${Math.round(hourly.temperature_2m[i])}°</div><div class="hour-rain">💧 ${hourly.precipitation_probability?.[i] || 0}%</div></div>`;
+    }).join('');
+    document.getElementById('hourlyList').innerHTML = html;
+  }
+  
+  function renderDaily(data) {
+    const daily = data.daily;
+    const days = daily.time.slice(0,5);
+    const html = days.map((d, idx) => {
+      const emoji = getWeatherEmoji(daily.weather_code[idx]);
+      const dayName = idx === 0 ? 'Today' : new Date(d).toLocaleDateString('en-IN', { weekday:'short' });
+      return `<div class="day-card"><div class="day-name">${dayName}</div><div class="day-emoji">${emoji}</div><div class="day-high">${Math.round(daily.temperature_2m_max[idx])}°</div><div class="day-low">${Math.round(daily.temperature_2m_min[idx])}°</div><div class="day-rain">🌧️ ${daily.precipitation_probability_max[idx] || 0}%</div></div>`;
+    }).join('');
+    document.getElementById('dailyGrid').innerHTML = html;
+  }
+  
+  async function loadByGeolocation() {
+    if (!navigator.geolocation) { showStatus('Geo not supported', true); return; }
+    showStatus('📍 Fetching your location...');
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      await fetchWeatherByCoords(latitude, longitude, 'Your Location');
+    }, () => showStatus('Location denied. Use search.', true));
+  }
+  
+  // event listeners
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    const query = document.getElementById('cityInput').value.trim();
+    if (query) loadWeatherByCity(query);
+  });
+  document.getElementById('geoBtn').addEventListener('click', loadByGeolocation);
+  districtSelect.addEventListener('change', (e) => {
+    if (e.target.value) {
+      document.getElementById('cityInput').value = e.target.value;
+      loadWeatherByCity(e.target.value);
+    }
+  });
+  document.getElementById('cityInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') document.getElementById('searchBtn').click(); });
+  
+  // default load: Lucknow (representative city)
+  loadWeatherByCity('Lucknow');
+</script>
+</body>
+</html>
