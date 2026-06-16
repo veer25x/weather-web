@@ -2,7 +2,6 @@
 
 **Real-time weather forecast website covering all Indian districts with a beautiful sky-blue interface**
 
-![Weather App Screenshot](https://via.placeholder.com/800x400?text=Akash+Weather+Preview)
 
 ## ✨ Features
 
