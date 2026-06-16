@@ -1,5 +1,7 @@
 # 🌦️ Akash Weather · India Weather Forecast
 
+live link(https://veer25x.github.io/weather-web/)
+
 **Real-time weather forecast website covering all Indian districts with a beautiful sky-blue interface**
 
 
